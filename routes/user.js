@@ -1,44 +1,61 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const User = require('../models/user');
-const auth = require('../middleware/auth');
 
-// Get current user's profile
-router.get('/me', auth, async (req, res) => {
+router.get('/', (req, res) => {
+    res.send("Hello World");
+});
+
+router.post('/register', async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.json(user);
+        const { name, email, password } = req.body;
+        const user = new User({ name, email, password });
+        const salt = await bcrypt.genSalt();
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+
+        const payload = {
+            user: {
+                id: user.id
+            }
+        };
+
+        jwt.sign(payload, process.env.SECRET, { expiresIn: 360000 }, (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+        });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error(err.message);
+        res.status(500).send("Error in Saving");
     }
 });
 
-// Update user's profile
-router.patch('/me', auth, async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(req.user.id, req.body, { new: true });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user)
+            return res.status(400).send("User Not Exist");
 
-// Delete user's profile
-router.delete('/me', auth, async (req, res) => {
-    try {
-        const user = await User.findByIdAndDelete(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.json({ message: 'User deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch)
+            return res.status(400).send("Incorrect Password");
+
+        const payload = {
+            user: {
+                id: user.id
+            }
+        };
+
+        jwt.sign(payload, process.env.SECRET, { expiresIn: 360000 }, (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Error in Login");
     }
 });
 

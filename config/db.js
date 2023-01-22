@@ -1,17 +1,25 @@
-const mongoose = require('mongoose');
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+const MongoClient = require("mongodb").MongoClient;
 
-const connectDB = async () => {
+const uri = process.env.MONGO_URL;
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const connect = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGO_URI,{
-            useNewUrlParser: true,
-            userCreateIndex: true,
-            useUnifiedTopology: true
-        });
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch(err){
-        console.error(err);
-        process.exit(1);
+        await client.connect();
+        console.log("Connected to MongoDB Atlas");
+    } catch (error) {
+        console.log(`Error connecting to MongoDB Atlas: ${error}`);
     }
 };
 
-module.exports = connectDB;
+const isConnected = () => {
+    return client.isConnected();
+};
+
+const close = () => {
+    client.close();
+};
+
+module.exports = { connect, isConnected, close };

@@ -1,25 +1,23 @@
 const express = require('express');
 const app = express();
-const connectDB = require('./config/db');
+const db = require('./config/db');
 const auth = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
+const port = process.env.PORT || 3000;
 
-// Connect to MongoDB
-connectDB();
+db.connect();
 
-// Parse incoming JSON data
+// Middleware
 app.use(express.json());
-
-// Use routes
-app.use('/user', auth, userRoutes);
-app.use('/auth', authRoutes);
-
-// error handling middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Routes
+app.use('/users', auth, userRoutes);
+app.use('/auth', authRoutes);
+
+// Server
+app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
 });
