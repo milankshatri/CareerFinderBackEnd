@@ -1,5 +1,10 @@
 const MongoClient = require('mongodb').MongoClient;
 const bcrypt = require('bcrypt');
+const ObjectID = require('mongodb').ObjectID;
+const mongoose = require('mongoose');
+
+
+
 
 class User {
     constructor(name, email, password) {
