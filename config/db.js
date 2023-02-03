@@ -15,11 +15,11 @@ const connect = async () => {
 };
 
 const isConnected = () => {
-    return client.isConnected();
+    return client.topology.isConnected();
 };
 
 const close = () => {
     client.close();
 };
 
-module.exports = { connect, isConnected, close };
+module.exports = { connect, isConnected, client, close };

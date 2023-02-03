@@ -18,7 +18,7 @@ app.use(errorHandler);
 
 
 // Routes
-app.use('/users', auth, userRoutes);
+app.use('/user', auth, userRoutes);
 app.use('/otp', otpRoutes);
 app.use('/auth', authRoutes);
 app.get('/',(req,res)=>{

@@ -6,16 +6,17 @@ const User = require("../models/user");
 const jwt = require('jsonwebtoken');
 const path = require("path");
 const auth = require('../middleware/auth');
+const { id } = require('@hapi/joi/lib/base');
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 router.post('/signup', validation.validateSignup, async (req, res) => {
     const { name, email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
     if (user) {
         return res.status(400).json({ message: 'Email already in use' });
     }
-    const hash = await bcrypt.hashPassword(password);
-    const newUser = new User({ name, email, password: hash });
+    const hashed = await bcrypt.hashPassword(password, 10);
+    const newUser = new User( name, email, hashed );
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ user: newUser.getPublicProfile(), token });
@@ -23,16 +24,16 @@ router.post('/signup', validation.validateSignup, async (req, res) => {
 
 router.post('/login', validation.validateLogin, async (req, res) => {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findByEmail(email);
     if (!user) {
         return res.status(400).json({ message: 'Invalid credentials' });
     }
-    const isValid = await bcrypt.comparePassword(password, user.password);
+    const isValid = await bcrypt.comparePasswords(password, user.password);
     if (!isValid) {
         return res.status(400).json({ message: 'Invalid credentials' });
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ user: user.getPublicProfile(), token });
+    res.json({ message: "Logged In", email: email, token });
 });
 
 router.get('/users', auth, async (req, res) => {

@@ -14,10 +14,9 @@ router.post('/send', sessionMiddleware, async (req, res) => {
     const transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
-      secure: false,
       auth: {
-        user: 'casandra.heller30@ethereal.email',
-        pass: 'NpKcvXEGWYPSSyfsG1'
+          user: 'verner.sanford45@ethereal.email',
+          pass: 'dtcv7ZyZUhhMyHHWkF'
       }
     });
     const mailOptions = {
@@ -29,6 +28,7 @@ router.post('/send', sessionMiddleware, async (req, res) => {
     await transporter.sendMail(mailOptions);
     // Save the OTP in the user's session for later verification
     req.session.otp = otp;
+    console.log(req.session.otp);
     return res.status(200).json({ message: 'OTP sent to email' });
   } catch (error) {
     console.error(error);
@@ -40,7 +40,9 @@ router.post('/verify', sessionMiddleware, async (req, res) => {
   try {
     const { otp } = req.body;
     // Compare the received OTP with the one in the session
-    if (req.session.otp === otp) {
+    console.log(typeof otp);
+    if (parseInt(req.session.otp) === otp) {
+      console.log(req.session.otp);
       // OTP is correct, allow the user to register
       req.session.isVerified = true;
       return res.status(200).json({ message: 'Email verified' });
