@@ -5,14 +5,13 @@ const saltRounds = 10;
 
 const hashPassword = (password) => {
     const salt = bcrypt.genSaltSync(saltRounds);
-    return bcrypt.hashSync(password, salt);
+    console.log(process.env.SECRET_KEY)
+    return bcrypt.hashSync(password + process.env.SECRET_KEY, salt);
 };
 
 const comparePasswords = (password, hash) => {
-    return bcrypt.compareSync(password, hash);
+    return bcrypt.compareSync(password + process.env.SECRET_KEY, hash);
 };
 
-const secret = process.env.BCRYPT_SECRET;
-const hashedPassword = hashPassword(secret);
 
-module.exports = { hashPassword, comparePasswords, hashedPassword };
+module.exports = { hashPassword, comparePasswords};
