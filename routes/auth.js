@@ -10,13 +10,13 @@ const { id } = require('@hapi/joi/lib/base');
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 router.post('/signup', validation.validateSignup, async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, phoneNumber, password } = req.body;
     const user = await User.findByEmail(email);
     if (user) {
         return res.status(400).json({ message: 'Email already in use' });
     }
     const hashed = await bcrypt.hashPassword(password, 10);
-    const newUser = new User( name, email, hashed );
+    const newUser = new User( name, email, phoneNumber, hashed );
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ user: newUser.getPublicProfile(), token });
@@ -37,7 +37,8 @@ router.post('/login', validation.validateLogin, async (req, res) => {
 });
 
 router.get('/users', auth, async (req, res) => {
-    res.json({ user: req.user });
+    const user = req.user;
+    res.json({ user });
 });
 
 module.exports = router;

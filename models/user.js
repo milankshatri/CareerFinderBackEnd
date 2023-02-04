@@ -2,10 +2,11 @@ const { ObjectId } = require("mongodb");
 const connection = require('../config/db');
 
 class User {
-    constructor(name, email, password) {
+    constructor(name, email, phoneNumber, password) {
         this.name = name;
         this.email = email;
-        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.password = password
     }
 
     async save() {
