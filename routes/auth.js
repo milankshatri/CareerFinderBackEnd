@@ -9,6 +9,8 @@ const auth = require('../middleware/auth');
 const { id } = require('@hapi/joi/lib/base');
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
+
+
 router.post('/signup', validation.validateSignup, async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
     const user = await User.findByEmail(email);
@@ -41,4 +43,4 @@ router.get('/users', auth, async (req, res) => {
     res.json({ user });
 });
 
-module.exports = router;
+module.exports = router
