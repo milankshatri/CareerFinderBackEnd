@@ -3,7 +3,6 @@ const cors = require('cors');
 const app = express();
 const db = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
-const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
 const otpRoutes = require('./routes/otp');
 const port = process.env.PORT || 3000;

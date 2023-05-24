@@ -6,10 +6,14 @@ const User = require("../models/user");
 const jwt = require('jsonwebtoken');
 const path = require("path");
 const auth = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
 const { id } = require('@hapi/joi/lib/base');
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
-
+const generateRefreshToken = () => {
+  const refreshToken = uuidv4();
+  return refreshToken;
+};
 
 router.post('/signup', validation.validateSignup, async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
@@ -19,9 +23,11 @@ router.post('/signup', validation.validateSignup, async (req, res) => {
     }
     const hashed = await bcrypt.hashPassword(password, 10);
     const newUser = new User( name, email, phoneNumber, hashed );
+    const refreshToken = generateRefreshToken();
+    newUser.refreshToken = refreshToken;
     await newUser.save();
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.status(201).json({ user: newUser.getPublicProfile(), token });
+    const accesstoken = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ user: newUser.getPublicProfile(), accesstoken, refreshToken });
 });
 
 router.post('/login', validation.validateLogin, async (req, res) => {
