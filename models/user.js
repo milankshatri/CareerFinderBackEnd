@@ -6,7 +6,7 @@ class User {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
-        this.password = password
+        this.password = password;
     }
 
     async save() {
@@ -37,6 +37,19 @@ class User {
         const dbInstance = connection.client.db("test");
         const collection = dbInstance.collection("users");
         return collection.findOne({ _id: new ObjectId(id) });
+    }
+
+    async updateRefreshToken(refreshToken) {
+        if (!connection.isConnected()) {
+          throw new Error("Database is not connected");
+        }
+    
+        const dbInstance = connection.client.db("test");
+        const collection = dbInstance.collection("users");
+        await collection.updateOne(
+          { _id: new ObjectId(this._id) },
+          { $set: { refreshToken } }
+        );
     }
 
     getPublicProfile() {

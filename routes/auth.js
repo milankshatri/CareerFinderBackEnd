@@ -22,7 +22,7 @@ router.post('/signup', validation.validateSignup, async (req, res) => {
         return res.status(400).json({ message: 'Email already in use' });
     }
     const hashed = await bcrypt.hashPassword(password, 10);
-    const newUser = new User( name, email, phoneNumber, hashed );
+    const newUser = new User( name, email, phoneNumber, hashed);
     const refreshToken = generateRefreshToken();
     newUser.refreshToken = refreshToken;
     await newUser.save();
@@ -44,9 +44,34 @@ router.post('/login', validation.validateLogin, async (req, res) => {
     res.json({ message: "Logged In", email: email, token });
 });
 
+router.post('/logout', auth, async (req, res) => {
+    try{
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }  
+        await user.updateRefreshToken;
+        res.json({ message: 'Logged out successfully' });
+    }catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+    
+});
+
 router.get('/users', auth, async (req, res) => {
-    const user = req.user;
-    res.json({ user });
+    try {
+      const userId = req.user.id;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      delete user.password;
+      res.json(user); // Return the user object directly
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 module.exports = router
