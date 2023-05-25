@@ -1,22 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const path = require("path");
+const path = require('path');
+const Mailgen = require('mailgen');
 const otpGenerator = require('otp-generator');
-require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
-const nodemailer = require ('nodemailer');
-const User = require("../models/user");
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const nodemailer = require('nodemailer');
+const User = require('../models/user');
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  secure: false,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL,
     pass: process.env.PASSWORD,
   },
 });
 
-router.post('/generateOTP',  async (req, res) => {
+const mailGenerator = new Mailgen({
+  theme: 'default',
+  product: {
+    name: 'Mailgen',
+    link: 'https://mailgen.js/',
+  },
+});
+
+router.post('/generateOTP', async (req, res) => {
   try {
     const OTP = otpGenerator.generate(6, {
       lowerCaseAlphabets: false,
@@ -27,27 +34,37 @@ router.post('/generateOTP',  async (req, res) => {
     const { email } = req.body;
     const user = await User.findByEmail(email);
     if (user) {
-        return res.status(400).json({ message: 'Email already in use' });
+      return res.status(400).json({ message: 'Email already in use' });
     }
 
     req.app.locals.OTP = OTP;
 
+    const emailBody = {
+      body: {
+        name: 'OTP Verification',
+        intro: 'Your OTP is:',
+        code: OTP,
+        outro: 'Need help, or have questions? Just reply to this email, we\'d love to help.',
+      },
+    };
+
+    const emailTemplate = mailGenerator.generate(emailBody);
     const mailOptions = {
       from: process.env.EMAIL,
       to: req.body.email, // Assuming the email is provided in the request body
       subject: 'OTP Verification',
-      text: `Your OTP is: ${OTP}`,
+      html: emailTemplate,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(201).json({ message: "OTP Sent to Email" });
+    return res.status(201).json({ message: 'OTP Sent to Email' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-router.post('/verifyOTP',  async (req, res) => {
+router.post('/verifyOTP', async (req, res) => {
   try {
     const { code } = req.query;
     const storedOTP = req.app.locals.OTP;
@@ -64,4 +81,4 @@ router.post('/verifyOTP',  async (req, res) => {
   }
 });
 
-module.exports = router
+module.exports = router;
