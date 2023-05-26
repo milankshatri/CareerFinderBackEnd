@@ -52,7 +52,7 @@ router.post('/generateOTP', async (req, res) => {
 
     const mailOptions = {
       from: process.env.EMAIL,
-      to: req.body.email, // Assuming the email is provided in the request body
+      to: req.body.email,
       subject: 'OTP Verification',
       html: emailBody,
     };
