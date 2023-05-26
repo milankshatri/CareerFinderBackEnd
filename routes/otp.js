@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
 const mailGenerator = new Mailgen({
   theme: 'default',
   product: {
-    name: 'Mailgen',
+    name: 'OTP',
     link: 'https://mailgen.js/',
   },
 });
@@ -31,34 +31,35 @@ router.post('/generateOTP', async (req, res) => {
       specialChars: false,
     });
 
+    req.app.locals.OTP = OTP;
+
     const { email } = req.body;
     const user = await User.findByEmail(email);
     if (user) {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
-    req.app.locals.OTP = OTP;
 
-    const emailBody = {
-      body: {
-        name: 'OTP Verification',
-        intro: 'Your OTP is:',
-        code: OTP,
-        outro: 'Need help, or have questions? Just reply to this email, we\'d love to help.',
-      },
-    };
+    const emailBody = `
+      <p>Hi</p>
+      <p>Your OTP is: ${OTP}</p>
+      <p>Need help, or have questions? Just reply to this email, we'd love to help.</p>
+      
+      <p>Yours truly</p>
+      <p>CareerFinder Team</p>
+    `;
 
-    const emailTemplate = mailGenerator.generate(emailBody);
+
     const mailOptions = {
       from: process.env.EMAIL,
       to: req.body.email, // Assuming the email is provided in the request body
       subject: 'OTP Verification',
-      html: emailTemplate,
+      html: emailBody,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(201).json({ message: 'OTP Sent to Email' });
+    return res.status(201).json({ message: `OTP Sent to Email` });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -79,6 +80,10 @@ router.post('/verifyOTP', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
+});
+
+router.post('/verifyIOTP', async (req, res) => {
+  console.log(req.app.locals.OTP)
 });
 
 module.exports = router;
