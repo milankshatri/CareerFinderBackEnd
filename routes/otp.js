@@ -23,22 +23,24 @@ const mailGenerator = new Mailgen({
   },
 });
 
+// Generate and store OTP for each user
+const userOTPMap = new Map();
+
 router.post('/generateOTP', async (req, res) => {
   try {
-    const OTP = otpGenerator.generate(6, {
-      lowerCaseAlphabets: false,
-      upperCaseAlphabets: false,
-      specialChars: false,
-    });
-
-    req.app.locals.OTP = OTP;
-
     const { email } = req.body;
     const user = await User.findByEmail(email);
     if (user) {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
+    const OTP = otpGenerator.generate(6, {
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
+
+    userOTPMap.set(email, OTP);
 
     const emailBody = `
       <p>Hi</p>
@@ -49,17 +51,16 @@ router.post('/generateOTP', async (req, res) => {
       <p>CareerFinder Team</p>
     `;
 
-
     const mailOptions = {
       from: process.env.EMAIL,
-      to: req.body.email,
+      to: email,
       subject: 'OTP Verification',
       html: emailBody,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(201).json({ message: `OTP Sent to Email` });
+    return res.status(201).json({ message: 'OTP Sent to Email' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -67,11 +68,11 @@ router.post('/generateOTP', async (req, res) => {
 
 router.post('/verifyOTP', async (req, res) => {
   try {
-    const { code } = req.query;
-    const storedOTP = req.app.locals.OTP;
+    const { code, email } = req.body;
+    const storedOTP = userOTPMap.get(email);
 
-    if (parseInt(storedOTP) === parseInt(code)) {
-      req.app.locals.OTP = null; // Reset the OTP value
+    if (storedOTP && parseInt(storedOTP) === parseInt(code)) {
+      userOTPMap.delete(email); // Remove the OTP for the verified user
       req.app.locals.resetSession = true;
       return res.status(201).json({ msg: 'Verification Successful!' });
     }
@@ -80,10 +81,6 @@ router.post('/verifyOTP', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-});
-
-router.post('/verifyIOTP', async (req, res) => {
-  console.log(req.app.locals.OTP)
 });
 
 module.exports = router;
