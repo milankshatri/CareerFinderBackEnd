@@ -5,6 +5,7 @@ const db = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth');
 const otpRoutes = require('./routes/otp');
+const jobRoutes = require('./routes/crudJobs')
 const port = process.env.PORT || 3000;
 
 db.connect();
@@ -19,6 +20,7 @@ app.use(errorHandler);
 app.use(express.static('public'));
 app.use('/auth', authRoutes);
 app.use('/otp', otpRoutes);
+app.use('/jobs', jobRoutes);
 app.get('/',(req,res)=>{
     res.json({
         message : "Server is running"
