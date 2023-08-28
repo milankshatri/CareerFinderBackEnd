@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Job = require('../models/jobs');
 const path = require("path");
+const connection = require('../config/db');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 router.post('/jobs', auth, async (req, res) => {
@@ -33,6 +34,23 @@ router.post('/jobs', auth, async (req, res) => {
 
         await newJob.save();
         res.status(201).json({ message: 'Job created successfully', job: newJob });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+router.get('/jobs', async (req, res) => {
+    try {
+        if (!connection.isConnected()) {
+            return res.status(500).json({ error: 'Database is not connected' });
+        }
+
+        const dbInstance = connection.client.db("test");
+        const collection = dbInstance.collection("jobs");
+        const allJobs = await collection.find().toArray();
+
+        res.json(allJobs);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
